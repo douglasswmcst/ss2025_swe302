@@ -5,6 +5,15 @@ This is a practical walkthrough on writing unit and coverage tests for a simple 
 This guide will teach you how to write effective unit tests for a Go HTTP server and how to measure your test coverage to ensure your code is robust and reliable. We'll use only Go's powerful standard library, specifically the `testing` and `net/http/httptest` packages.
 
 -----
+## **Submission Instructions**
+
+Details of Submission:
+
+1. Screenshot of your terminal commands
+![Terminal Screenshot](../assets/p2_term.png)
+2. Screenshot of the UI of code coverage
+![Code Coverage UI](../assets/p2_cc.png)
+
 
 ### The Big Picture: What We're Building and Testing
 
