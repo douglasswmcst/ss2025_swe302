@@ -1,4 +1,4 @@
-# **Module Practical: Software Testing & Quality Assurance**
+# **Module Practical 2: Software Testing & Quality Assurance**
 
 This is a practical walkthrough on writing unit and coverage tests for a simple Go server with CRUD operations.
 
