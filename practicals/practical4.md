@@ -64,33 +64,7 @@ cd cicd-demo
 ls -la
 ```
 
-#### Option 2: Fork and Clone (Recommended for Practice)
-
-For hands-on practice where you'll be making changes and testing workflows:
-
-1. **Fork the Repository**:
-
-   - Go to https://github.com/douglasswmcst/cicd-demo
-   - Click the "Fork" button in the top-right corner
-   - Select your GitHub account as the destination
-
-2. **Clone Your Fork**:
-
-   ```bash
-   # Replace 'your-username' with your actual GitHub username
-   git clone https://github.com/your-username/cicd-demo.git
-
-   # Navigate to the project directory
-   cd cicd-demo
-
-   # Add the original repository as upstream (for future updates)
-   git remote add upstream https://github.com/douglasswmcst/cicd-demo.git
-
-   # Verify remotes
-   git remote -v
-   ```
-
-3. **Verify Your Environment**:
+1. **Verify Your Environment**:
 
    ```bash
    # Check Java version (should be 17 or higher)
