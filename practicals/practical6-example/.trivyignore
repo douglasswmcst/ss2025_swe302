@@ -1,0 +1,12 @@
+# Trivy ignore file
+# Use this to suppress specific findings that are acceptable in your context
+
+# Example: Ignore specific AVD (AWS Vulnerability Database) IDs
+# AVD-AWS-0086  # Example: S3 bucket logging
+# AVD-AWS-0132  # Example: S3 bucket versioning
+
+# For learning purposes, we want to see all findings
+# Add your own suppressions below if needed
+
+# Format: AVD-<provider>-<number>
+# You can find IDs in Trivy scan results

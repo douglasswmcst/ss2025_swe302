@@ -1,0 +1,52 @@
+# Trivy configuration for Infrastructure as Code scanning
+# This configuration is optimized for educational purposes
+
+# Scan configuration
+scan:
+  # Security checks to perform
+  security-checks:
+    - config
+    - secret
+
+  # Scanners to use
+  scanners:
+    - config
+    - secret
+
+# Report configuration
+format: table
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+
+# Exit code configuration
+# Exit with code 1 if vulnerabilities are found
+exit-code: 0  # Set to 0 for learning (won't fail scripts)
+
+# Misconfiguration scanning
+misconfiguration:
+  # Terraform-specific settings
+  terraform:
+    # Include all Terraform files
+    include: "**/*.tf"
+
+  # Trace information for debugging
+  trace: false
+
+# Secret scanning
+secret:
+  # Additional patterns to detect
+  config: .trivysecret.yaml
+
+# Cache configuration
+cache:
+  # Cache directory
+  dir: .trivy-cache
+
+# Ignore unfixed vulnerabilities
+ignore-unfixed: false
+
+# Include information about fixed vulnerabilities
+list-all-pkgs: false

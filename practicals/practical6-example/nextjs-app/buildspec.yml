@@ -1,0 +1,46 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: production
+    NEXT_TELEMETRY_DISABLED: 1
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "Node version:"
+      - node --version
+      - echo "NPM version:"
+      - npm --version
+
+  pre_build:
+    commands:
+      - echo "Installing dependencies..."
+      - npm ci
+      - echo "Running linter..."
+      - npm run lint || true
+
+  build:
+    commands:
+      - echo "Building Next.js application..."
+      - npm run build
+      - echo "Build completed at $(date)"
+      - echo "Listing output directory..."
+      - ls -la out/
+
+  post_build:
+    commands:
+      - echo "Build artifacts ready for deployment"
+      - echo "Total files:" $(find out -type f | wc -l)
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: out
+  name: nextjs-build-$(date +%Y%m%d-%H%M%S)
+
+cache:
+  paths:
+    - 'node_modules/**/*'
