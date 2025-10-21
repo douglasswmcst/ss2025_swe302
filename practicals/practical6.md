@@ -721,42 +721,26 @@ Code   Preview  Deploy  Update
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Static Exports](https://nextjs.org/docs/app/building-your-application/deploying/static-exports)
 
-## Challenge: Advanced Topics
 
-If you finish early, try these advanced challenges:
+## Submission Requiremnts
 
-1. **Multi-Environment Setup**: Modify Terraform to support dev/staging/prod environments using workspaces
-2. **Custom Error Pages**: Create custom 404 and 500 error pages for your website
-3. **Bucket Lifecycle Policies**: Add lifecycle rules to automatically delete old log files
-4. **Terraform Modules**: Refactor code into reusable Terraform modules
-5. **State Management**: Configure remote state storage (S3 backend)
-6. **Automated Testing**: Write tests for your Terraform configuration using Terratest
-7. **Cost Analysis**: Add cost estimation with Infracost
-8. **CI/CD Integration**: Create a GitHub Actions workflow to deploy on push
-9. **CloudFront Distribution**: Add CloudFront in front of S3 (if using real AWS)
-10. **Monitoring**: Add CloudWatch alarms for bucket size and access patterns
-
-## Submission
-
+1. Main Outcome 
+ - Remove all critical and high vulnerabilities from the insecure terraform code using trivy as a guide.
+ - 
 Document your work by:
 
 1. Taking screenshots of:
    - Successful Terraform apply
    - Deployed website
-   - Trivy scan results (both secure and insecure)
+   - Trivy scan results (both secure and insecure) displaying zero critical and high vulnerabilities
    - Fixed security issue
 
 2. Answering these reflection questions:
-   - What are the main benefits of Infrastructure as Code?
    - Why is it important to scan IaC for security issues?
    - How does LocalStack help in the development workflow?
-   - What security features did you implement in your S3 configuration?
-   - How would you extend this to a production environment?
 
-3. (Optional) Share your implementation:
+3. Share your implementation:
    - Git repository with your changes
-   - Any additional features you implemented
-   - Documentation of challenges you faced
 
 ## Conclusion
 
