@@ -27,16 +27,111 @@ In this practical, you'll learn how to define, deploy, and secure cloud infrastr
 
 ## Prerequisites
 
-Before starting, ensure you have:
+Before starting, ensure you have the following tools installed:
 
-- Docker and Docker Compose installed
-- Terraform >= 1.0 (`brew install terraform`)
-- `terraform-local` wrapper (`pip install terraform-local`)
-- Node.js >= 18 (`brew install node`)
-- AWS CLI with `awslocal` wrapper (`pip install awscli-local`)
-- Trivy (`brew install trivy`)
-- A code editor (VS Code recommended)
-- Basic understanding of Git, AWS concepts, and terminal usage
+### Required Software
+
+1. **Docker and Docker Compose**
+   - **macOS**: [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+   - **Windows**: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+   - **Linux**: [Docker Engine](https://docs.docker.com/engine/install/) + [Docker Compose](https://docs.docker.com/compose/install/)
+
+2. **Terraform** (>= 1.0)
+   - **macOS**: `brew install terraform`
+   - **Windows**: `choco install terraform` or download from [terraform.io](https://www.terraform.io/downloads)
+   - **Linux**:
+     ```bash
+     wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+     echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+     sudo apt update && sudo apt install terraform
+     ```
+
+3. **terraform-local (tflocal)** - Wrapper for Terraform with LocalStack
+   - **All platforms**:
+     ```bash
+     pip install terraform-local
+     ```
+   - **What it does**: `tflocal` is a thin wrapper that automatically configures Terraform to use LocalStack endpoints
+   - **Why you need it**: Simplifies Terraform commands by auto-configuring LocalStack settings
+   - **Usage**: Use `tflocal` instead of `terraform` (e.g., `tflocal init`, `tflocal apply`)
+
+4. **Node.js** (>= 18)
+   - **macOS**: `brew install node`
+   - **Windows**: Download from [nodejs.org](https://nodejs.org/) or `choco install nodejs`
+   - **Linux**:
+     ```bash
+     curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+     sudo apt-get install -y nodejs
+     ```
+
+5. **AWS CLI** with `awslocal` wrapper
+   - **All platforms**:
+     ```bash
+     pip install awscli awscli-local
+     ```
+
+6. **Trivy** (Security Scanner)
+   - **macOS**: `brew install trivy`
+   - **Windows**:
+     ```powershell
+     # Using Chocolatey
+     choco install trivy
+
+     # Or download binary from GitHub
+     # https://github.com/aquasecurity/trivy/releases
+     ```
+   - **Linux**:
+     ```bash
+     # Debian/Ubuntu
+     sudo apt-get install wget apt-transport-https gnupg lsb-release
+     wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+     echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+     sudo apt-get update
+     sudo apt-get install trivy
+
+     # RHEL/CentOS
+     sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.48.0/trivy_0.48.0_Linux-64bit.rpm
+     ```
+
+7. **Code Editor**
+   - [Visual Studio Code](https://code.visualstudio.com/) (recommended)
+   - Or any text editor of your choice
+
+### Knowledge Prerequisites
+
+- Basic understanding of Git and version control
+- Familiarity with AWS concepts (S3, IAM)
+- Comfortable using command line/terminal
+- Basic knowledge of web development
+
+### Verify Installation
+
+After installing all tools, verify they're working:
+
+```bash
+# Check Docker
+docker --version
+docker-compose --version
+
+# Check Terraform and tflocal
+terraform --version
+tflocal --version  # Should show same version as terraform
+
+# Check Node.js
+node --version
+npm --version
+
+# Check AWS CLI and awslocal
+aws --version
+awslocal --version  # LocalStack wrapper for AWS CLI
+
+# Check Trivy
+trivy --version
+```
+
+All commands should return version numbers without errors.
+
+**Note**: `tflocal` and `awslocal` are wrapper scripts that should show the same underlying version as `terraform` and `aws` respectively. If `tflocal --version` shows the same Terraform version, it's correctly installed.
 
 ## Part 1: Understanding the Architecture
 

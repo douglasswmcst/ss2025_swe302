@@ -47,13 +47,40 @@ This example demonstrates deploying a Next.js application to LocalStack AWS usin
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- Terraform >= 1.0
-- `terraform-local` wrapper (`pip install terraform-local`)
-- Node.js >= 18
-- AWS CLI with `awslocal` wrapper (via `pip install awscli-local`)
-- Trivy (for security scanning: `brew install trivy` on macOS)
-- Make (optional, for convenience commands)
+### Required Software
+
+1. **Docker and Docker Compose**
+   - **macOS**: [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+   - **Windows**: [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+   - **Linux**: [Docker Engine](https://docs.docker.com/engine/install/) + [Docker Compose](https://docs.docker.com/compose/install/)
+
+2. **Terraform** (>= 1.0)
+   - **macOS**: `brew install terraform`
+   - **Windows**: `choco install terraform` or download from [terraform.io](https://www.terraform.io/downloads)
+   - **Linux**: Use official HashiCorp repository or download binary
+
+3. **terraform-local (tflocal)** - Wrapper for Terraform with LocalStack
+   - **All platforms**: `pip install terraform-local`
+   - **What it does**: Automatically configures Terraform to use LocalStack endpoints
+   - **Usage**: Use `tflocal` instead of `terraform` commands
+
+4. **Node.js** (>= 18)
+   - **macOS**: `brew install node`
+   - **Windows**: Download from [nodejs.org](https://nodejs.org/) or `choco install nodejs`
+   - **Linux**: Use NodeSource repository or package manager
+
+5. **AWS CLI** with `awslocal` wrapper
+   - **All platforms**: `pip install awscli awscli-local`
+
+6. **Trivy** (Security Scanner)
+   - **macOS**: `brew install trivy`
+   - **Windows**: `choco install trivy` or download from [GitHub](https://github.com/aquasecurity/trivy/releases)
+   - **Linux**: Use official Trivy repository or download binary
+
+7. **Make** (optional, for convenience commands)
+   - **macOS**: Pre-installed
+   - **Windows**: `choco install make` or use Git Bash
+   - **Linux**: `sudo apt-get install build-essential` (Debian/Ubuntu)
 
 ## Quick Start
 

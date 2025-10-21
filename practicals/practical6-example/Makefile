@@ -1,4 +1,4 @@
-.PHONY: help setup deploy status clean destroy scan scan-insecure scan-all compare-security dev init
+.PHONY: help setup deploy status clean destroy scan scan-insecure scan-all compare-security dev init deploy-github verify rollback watch
 
 help: ## Show this help message
 	@echo "Practical 6 - Infrastructure as Code with Terraform"
@@ -48,3 +48,16 @@ scan-all: ## Scan all Terraform configurations
 
 compare-security: ## Compare secure vs insecure configurations
 	@./scripts/compare-security.sh
+
+# GitHub-based deployment commands (Practical 6a)
+deploy-github: ## Deploy from GitHub repository
+	@./scripts/deploy-from-github.sh
+
+verify: ## Verify deployment
+	@./scripts/verify-deployment.sh
+
+rollback: ## Rollback to previous commit (usage: make rollback COMMIT=abc123)
+	@./scripts/rollback.sh $(COMMIT)
+
+watch: ## Watch GitHub repo and auto-deploy on changes
+	@./scripts/watch-and-deploy.sh
