@@ -1,16 +1,11 @@
-output "source_bucket_name" {
-  description = "Name of the source S3 bucket"
-  value       = aws_s3_bucket.source.id
-}
-
-output "artifacts_bucket_name" {
-  description = "Name of the artifacts S3 bucket"
-  value       = aws_s3_bucket.artifacts.id
-}
-
 output "deployment_bucket_name" {
   description = "Name of the deployment S3 bucket"
   value       = aws_s3_bucket.deployment.id
+}
+
+output "logs_bucket_name" {
+  description = "Name of the logs S3 bucket"
+  value       = aws_s3_bucket.logs.id
 }
 
 output "deployment_website_endpoint" {
@@ -18,22 +13,12 @@ output "deployment_website_endpoint" {
   value       = "http://${aws_s3_bucket.deployment.bucket}.s3-website.localhost.localstack.cloud:4566"
 }
 
-output "pipeline_name" {
-  description = "Name of the CodePipeline"
-  value       = aws_codepipeline.nextjs_pipeline.name
+output "deploy_command" {
+  description = "Command to deploy the Next.js application"
+  value       = "awslocal s3 sync ../nextjs-app/out/ s3://${aws_s3_bucket.deployment.bucket}/ --delete"
 }
 
-output "codebuild_project_name" {
-  description = "Name of the CodeBuild project"
-  value       = aws_codebuild_project.nextjs_build.name
-}
-
-output "upload_command" {
-  description = "Command to upload source code"
-  value       = "awslocal s3 cp nextjs-app.zip s3://${aws_s3_bucket.source.bucket}/${var.source_zip_key}"
-}
-
-output "trigger_pipeline_command" {
-  description = "Command to trigger pipeline execution"
-  value       = "awslocal codepipeline start-pipeline-execution --name ${aws_codepipeline.nextjs_pipeline.name}"
+output "list_files_command" {
+  description = "Command to list deployed files"
+  value       = "awslocal s3 ls s3://${aws_s3_bucket.deployment.bucket}/ --recursive"
 }

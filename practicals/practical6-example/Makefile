@@ -1,4 +1,4 @@
-.PHONY: help setup deploy status logs clean destroy scan scan-insecure scan-all compare-security
+.PHONY: help setup deploy status clean destroy scan scan-insecure scan-all compare-security dev init
 
 help: ## Show this help message
 	@echo "Practical 6 - Infrastructure as Code with Terraform"
@@ -9,30 +9,23 @@ help: ## Show this help message
 setup: ## Start LocalStack
 	@./scripts/setup.sh
 
-deploy: ## Deploy full infrastructure and application
+deploy: ## Deploy infrastructure and application
 	@./scripts/deploy.sh
 
 status: ## Check deployment status
 	@./scripts/status.sh
-
-logs: ## Tail CodeBuild logs (requires PIPELINE_NAME)
-	@cd terraform && awslocal logs tail /aws/codebuild/$$(terraform output -raw codebuild_project_name) --follow
 
 clean: ## Clean up everything
 	@./scripts/cleanup.sh
 
 destroy: clean ## Alias for clean
 
-dev: ## Quick development cycle: build and deploy
+dev: ## Quick development cycle: build and deploy app only
 	@echo "Building Next.js app..."
 	@cd nextjs-app && npm run build
-	@echo "Packaging app..."
-	@cd nextjs-app/out && zip -r ../../nextjs-app.zip . > /dev/null
-	@echo "Uploading to S3..."
-	@cd terraform && awslocal s3 cp ../nextjs-app.zip s3://$$(terraform output -raw source_bucket_name)/nextjs-app.zip
-	@echo "Triggering pipeline..."
-	@cd terraform && awslocal codepipeline start-pipeline-execution --name $$(terraform output -raw pipeline_name)
-	@echo "Done! Use 'make status' to check progress"
+	@echo "Deploying to S3..."
+	@cd terraform && awslocal s3 sync ../nextjs-app/out/ s3://$$(terraform output -raw deployment_bucket_name)/ --delete
+	@echo "Done! Check status with 'make status'"
 
 website: ## Open website in browser
 	@cd terraform && open $$(terraform output -raw deployment_website_endpoint)
@@ -41,7 +34,7 @@ init: ## Initialize all dependencies
 	@echo "Installing Next.js dependencies..."
 	@cd nextjs-app && npm ci
 	@echo "Initializing Terraform..."
-	@cd terraform && terraform init
+	@cd terraform && tflocal init
 	@echo "Dependencies installed!"
 
 scan: ## Scan Terraform for security issues

@@ -1,6 +1,6 @@
 # Practical 6 - Infrastructure as Code with Terraform
 
-This example demonstrates deploying a Next.js application to LocalStack AWS using Terraform and AWS CodePipeline.
+This example demonstrates deploying a Next.js application to LocalStack AWS using Terraform for infrastructure management and S3 for static website hosting.
 
 ## Architecture
 
@@ -8,43 +8,48 @@ This example demonstrates deploying a Next.js application to LocalStack AWS usin
 ┌─────────────────────────────────────────────────────────────┐
 │                         LocalStack                           │
 │                                                               │
-│  ┌──────────┐      ┌─────────────────────────────────┐      │
-│  │ S3       │      │     AWS CodePipeline            │      │
-│  │ Source   │─────>│                                 │      │
-│  │ Bucket   │      │  ┌──────┐  ┌──────┐  ┌──────┐  │      │
-│  └──────────┘      │  │Source│─>│Build │─>│Deploy│  │      │
-│                    │  └──────┘  └──────┘  └──────┘  │      │
-│                    │               │                 │      │
-│                    │               v                 │      │
-│                    │         ┌──────────┐            │      │
-│                    │         │CodeBuild │            │      │
-│                    │         └──────────┘            │      │
-│                    └──────────────┬──────────────────┘      │
-│                                   │                          │
-│                                   v                          │
-│                         ┌────────────────┐                   │
-│                         │  S3 Deployment │                   │
-│                         │  (Static Site) │                   │
-│                         └────────────────┘                   │
+│  Developer Machine               S3 Buckets                  │
+│  ┌──────────────┐                                            │
+│  │              │       ┌────────────────┐                   │
+│  │  Next.js     │──────>│  Deployment    │                   │
+│  │  Build       │ sync  │  Bucket        │                   │
+│  │  (local)     │       │  (Website)     │                   │
+│  │              │       └────────────────┘                   │
+│  └──────────────┘                │                           │
+│                                   │                           │
+│                           ┌───────┴────────┐                 │
+│                           │                │                 │
+│                    ┌──────▼──────┐  ┌──────▼──────┐          │
+│                    │   Public    │  │    Logs     │          │
+│                    │   Website   │  │   Bucket    │          │
+│                    └─────────────┘  └─────────────┘          │
+│                                                               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## Components
 
 ### Infrastructure (Terraform)
-- **S3 Buckets**: Source code, pipeline artifacts, deployment, and logs
-- **IAM Roles**: CodePipeline and CodeBuild service roles with least-privilege policies
-- **CodeBuild**: Builds Next.js application using `buildspec.yml`
-- **CodePipeline**: Orchestrates Source → Build → Deploy workflow
+- **S3 Deployment Bucket**: Hosts the static website with public read access
+- **S3 Logs Bucket**: Stores access logs for the deployment bucket
+- **Bucket Policies**: Configured for public website access
+- **Server-Side Encryption**: AES256 encryption enabled on all buckets
 
 ### Application
 - **Next.js 14**: Modern React framework configured for static export
-- **Static Site**: Deployed to S3 with website hosting enabled
+- **Static Site**: Built locally and deployed to S3 via AWS CLI
+
+### Workflow
+1. **Local Build**: Next.js app is built on your machine
+2. **Terraform Deploy**: Infrastructure is provisioned in LocalStack
+3. **S3 Sync**: Static files are synced to the deployment bucket
+4. **Website Access**: Site is accessible via S3 website endpoint
 
 ## Prerequisites
 
 - Docker and Docker Compose
 - Terraform >= 1.0
+- `terraform-local` wrapper (`pip install terraform-local`)
 - Node.js >= 18
 - AWS CLI with `awslocal` wrapper (via `pip install awscli-local`)
 - Trivy (for security scanning: `brew install trivy` on macOS)
@@ -58,17 +63,16 @@ This example demonstrates deploying a Next.js application to LocalStack AWS usin
 # Initialize dependencies
 make init
 
-# Deploy everything
+# Deploy everything (infrastructure + application)
 make deploy
 
 # Check status
 make status
 
-# View logs
-make logs
-
-# Clean up
-make clean
+# View website
+make website
+# or manually:
+curl $(cd terraform && terraform output -raw deployment_website_endpoint)
 ```
 
 ### Option 2: Using Scripts
@@ -102,8 +106,6 @@ make setup
 This starts LocalStack with the required AWS services:
 - S3
 - IAM
-- CodePipeline
-- CodeBuild
 - CloudWatch Logs
 - STS
 
@@ -117,59 +119,32 @@ npm run build
 
 The build creates a static export in the `out/` directory.
 
-### 3. Package Application
-
-```bash
-cd nextjs-app/out
-zip -r ../../nextjs-app.zip .
-```
-
-### 4. Deploy Infrastructure
+### 3. Deploy Infrastructure
 
 ```bash
 cd terraform
-terraform init
-terraform plan
-terraform apply
+tflocal init
+tflocal plan
+tflocal apply
 ```
 
 This creates:
-- 4 S3 buckets (source, artifacts, deployment, logs)
-- IAM roles and policies
-- CodeBuild project
-- CodePipeline with 3 stages
+- 2 S3 buckets (deployment, logs)
+- Bucket policies for public access
+- Website configuration
+- Server-side encryption
 
-### 5. Upload Source Code
+### 4. Deploy Application to S3
 
 ```bash
 # Get bucket name from Terraform outputs
-SOURCE_BUCKET=$(cd terraform && terraform output -raw source_bucket_name)
+DEPLOYMENT_BUCKET=$(cd terraform && terraform output -raw deployment_bucket_name)
 
-# Upload ZIP file
-awslocal s3 cp nextjs-app.zip s3://$SOURCE_BUCKET/nextjs-app.zip
+# Sync files to S3
+awslocal s3 sync nextjs-app/out/ s3://$DEPLOYMENT_BUCKET/ --delete
 ```
 
-### 6. Trigger Pipeline
-
-```bash
-# Get pipeline name
-PIPELINE_NAME=$(cd terraform && terraform output -raw pipeline_name)
-
-# Start execution
-awslocal codepipeline start-pipeline-execution --name $PIPELINE_NAME
-```
-
-### 7. Monitor Progress
-
-```bash
-# Check pipeline status
-./scripts/status.sh
-
-# View build logs
-awslocal logs tail /aws/codebuild/practical6-build --follow
-```
-
-### 8. Access Website
+### 5. Access Website
 
 ```bash
 # Get website endpoint
@@ -177,6 +152,7 @@ WEBSITE=$(cd terraform && terraform output -raw deployment_website_endpoint)
 
 # Open in browser or curl
 curl $WEBSITE
+open $WEBSITE  # macOS
 ```
 
 ## Project Structure
@@ -194,22 +170,26 @@ practical6-example/
 │   ├── setup.sh               # Start LocalStack
 │   ├── deploy.sh              # Full deployment automation
 │   ├── status.sh              # Check deployment status
-│   └── cleanup.sh             # Clean up everything
+│   ├── cleanup.sh             # Clean up everything
+│   ├── scan.sh                # Run Trivy security scans
+│   └── compare-security.sh    # Compare secure vs insecure configs
 │
 ├── nextjs-app/
 │   ├── app/                   # Next.js application
 │   ├── next.config.js         # Configured for static export
-│   ├── buildspec.yml          # CodeBuild build specification
 │   └── package.json
 │
-└── terraform/
-    ├── main.tf                # Provider and backend configuration
-    ├── variables.tf           # Input variables
-    ├── s3.tf                  # S3 bucket definitions
-    ├── iam.tf                 # IAM roles and policies
-    ├── codebuild.tf           # CodeBuild project
-    ├── codepipeline.tf        # CodePipeline definition
-    └── outputs.tf             # Output values
+├── terraform/
+│   ├── main.tf                # Provider and backend configuration
+│   ├── variables.tf           # Input variables
+│   ├── s3.tf                  # S3 bucket definitions
+│   ├── iam.tf                 # IAM examples (commented out)
+│   └── outputs.tf             # Output values
+│
+└── terraform-insecure/        # Insecure examples for security learning
+    ├── s3-insecure.tf
+    ├── iam-insecure.tf
+    └── README.md
 ```
 
 ## Terraform Outputs
@@ -217,26 +197,23 @@ practical6-example/
 After applying Terraform, you'll see these useful outputs:
 
 ```
-source_bucket_name           - Name of the source S3 bucket
-artifacts_bucket_name        - Name of the artifacts S3 bucket
 deployment_bucket_name       - Name of the deployment S3 bucket
+logs_bucket_name             - Name of the logs S3 bucket
 deployment_website_endpoint  - Website URL
-pipeline_name                - CodePipeline name
-codebuild_project_name       - CodeBuild project name
-upload_command               - Command to upload source code
-trigger_pipeline_command     - Command to trigger pipeline
+deploy_command               - Command to deploy application
+list_files_command           - Command to list deployed files
 ```
 
 ## Development Workflow
 
-For quick iterations:
+For quick iterations after infrastructure is deployed:
 
 ```bash
 # Make changes to Next.js app
 cd nextjs-app
 # Edit files...
 
-# Quick redeploy (skips Terraform if no infrastructure changes)
+# Quick redeploy (builds and syncs to S3)
 make dev
 
 # Check status
@@ -255,18 +232,6 @@ docker-compose logs -f
 
 # Restart LocalStack
 docker-compose restart
-```
-
-### Pipeline fails
-```bash
-# Check pipeline state
-awslocal codepipeline get-pipeline-state --name practical6-pipeline
-
-# View build logs
-awslocal logs tail /aws/codebuild/practical6-build --follow
-
-# Check build details
-awslocal codebuild list-builds-for-project --project-name practical6-build
 ```
 
 ### Website not accessible
@@ -300,8 +265,8 @@ The Terraform configuration includes several security best practices:
 
 1. **Encryption**: All S3 buckets use server-side encryption (AES256)
 2. **Access Logging**: Deployment bucket access is logged to a separate logs bucket
-3. **Least Privilege**: IAM roles have minimal required permissions
-4. **Versioning**: Source bucket has versioning enabled (required by CodePipeline)
+3. **Least Privilege**: Resources have minimal required permissions
+4. **Public Access Control**: Explicit configuration for public website access
 
 ### Security Scanning with Trivy
 
@@ -338,25 +303,6 @@ Trivy reports findings by severity:
 - **MEDIUM**: Should be addressed (e.g., missing access logs)
 - **LOW**: Nice to have (e.g., missing tags)
 
-#### Common Vulnerabilities Detected
-
-1. **Unencrypted Storage**: S3 buckets without server-side encryption
-2. **Overly Permissive IAM**: Wildcard actions or resources in policies
-3. **Missing Logging**: No audit trail for access
-4. **Public Access**: Buckets publicly accessible when not needed
-5. **No Versioning**: Missing data recovery capabilities
-
-#### Integration with CI/CD
-
-Add Trivy scanning to your pipeline:
-
-```yaml
-# Example CodeBuild phase
-- name: security_scan
-  commands:
-    - trivy config --severity CRITICAL,HIGH --exit-code 1 terraform/
-```
-
 #### Learning Exercise
 
 1. Run `./scripts/scan.sh all` to scan both configurations
@@ -385,22 +331,39 @@ make clean
 This practical teaches:
 
 1. **Infrastructure as Code**: Define cloud infrastructure using Terraform
-2. **CI/CD Pipelines**: Build automated deployment pipelines with CodePipeline
-3. **LocalStack Development**: Test AWS services locally without cloud costs
-4. **Static Site Deployment**: Deploy Next.js applications as static sites
-5. **AWS Services**: Hands-on experience with S3, IAM, CodePipeline, CodeBuild
+2. **LocalStack Development**: Test AWS services locally without cloud costs
+3. **Static Site Deployment**: Deploy Next.js applications to S3
+4. **Security Scanning**: Use Trivy to identify IaC vulnerabilities
+5. **AWS Services**: Hands-on experience with S3, IAM basics, CloudWatch Logs
+6. **DevOps Workflow**: Build locally, deploy to cloud infrastructure
+
+## Why This Approach?
+
+This practical uses a **simplified architecture** that:
+- ✅ Works with free-tier LocalStack (no Pro license required)
+- ✅ Teaches core IaC concepts with Terraform
+- ✅ Demonstrates S3 static website hosting
+- ✅ Includes security scanning with Trivy
+- ✅ Provides a foundation for more complex CI/CD pipelines
+
+In production, you might extend this with:
+- GitHub Actions or GitLab CI for automated builds
+- AWS CloudFront for CDN and HTTPS
+- AWS Lambda for dynamic functionality
+- AWS CodePipeline for full CI/CD (requires AWS Pro or real AWS)
 
 ## Next Steps
 
 - Modify the Next.js application and redeploy
-- Add additional pipeline stages (e.g., testing)
+- Add environment-specific configurations (dev, staging, prod)
 - Experiment with different Terraform configurations
 - Add CloudWatch alarms for monitoring
-- Implement blue/green deployments
+- Implement blue/green deployments with multiple S3 buckets
 
 ## Resources
 
 - [Terraform Documentation](https://www.terraform.io/docs)
 - [LocalStack Documentation](https://docs.localstack.cloud)
-- [AWS CodePipeline Documentation](https://docs.aws.amazon.com/codepipeline/)
+- [AWS S3 Static Website Hosting](https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteHosting.html)
 - [Next.js Static Exports](https://nextjs.org/docs/app/building-your-application/deploying/static-exports)
+- [Trivy Documentation](https://trivy.dev/)

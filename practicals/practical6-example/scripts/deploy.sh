@@ -16,12 +16,12 @@ TERRAFORM_DIR="$PROJECT_ROOT/terraform"
 NEXTJS_DIR="$PROJECT_ROOT/nextjs-app"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}Practical 6 - Full Deployment Script${NC}"
+echo -e "${BLUE}Practical 6 - Deployment Script${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
 # Step 1: Check if LocalStack is running
-echo -e "${YELLOW}[1/7] Checking LocalStack status...${NC}"
+echo -e "${YELLOW}[1/5] Checking LocalStack status...${NC}"
 if ! curl -s http://localhost:4566/_localstack/health > /dev/null; then
     echo -e "${RED}LocalStack is not running. Starting LocalStack...${NC}"
     "$SCRIPT_DIR/setup.sh"
@@ -30,91 +30,70 @@ else
 fi
 echo ""
 
-# Step 2: Build Next.js application
-echo -e "${YELLOW}[2/7] Building Next.js application...${NC}"
-cd "$NEXTJS_DIR"
-if [ ! -d "node_modules" ]; then
-    echo "Installing dependencies..."
-    npm ci
-fi
-echo "Building Next.js app..."
-npm run build
-echo -e "${GREEN}Next.js build complete${NC}"
-echo ""
-
-# Step 3: Package application
-echo -e "${YELLOW}[3/7] Packaging application as ZIP...${NC}"
-cd "$NEXTJS_DIR/out"
-zip -r "$PROJECT_ROOT/nextjs-app.zip" . > /dev/null
-echo -e "${GREEN}Created nextjs-app.zip ($(du -h "$PROJECT_ROOT/nextjs-app.zip" | cut -f1))${NC}"
-echo ""
-
-# Step 4: Initialize and apply Terraform
-echo -e "${YELLOW}[4/7] Deploying infrastructure with Terraform...${NC}"
+# Step 2: Deploy infrastructure with Terraform
+echo -e "${YELLOW}[2/5] Deploying infrastructure with Terraform...${NC}"
 cd "$TERRAFORM_DIR"
 
 if [ ! -d ".terraform" ]; then
     echo "Initializing Terraform..."
-    terraform init
+    tflocal init
 fi
 
 echo "Planning Terraform changes..."
-terraform plan -out=tfplan
+tflocal plan -out=tfplan
 
 echo "Applying Terraform configuration..."
-terraform apply tfplan
+tflocal apply tfplan
 rm -f tfplan
 
 echo -e "${GREEN}Infrastructure deployed${NC}"
 echo ""
 
-# Step 5: Get bucket names from Terraform outputs
-echo -e "${YELLOW}[5/7] Retrieving infrastructure details...${NC}"
-SOURCE_BUCKET=$(terraform output -raw source_bucket_name)
-PIPELINE_NAME=$(terraform output -raw pipeline_name)
+# Step 3: Get bucket name from Terraform outputs
+echo -e "${YELLOW}[3/5] Retrieving infrastructure details...${NC}"
+DEPLOYMENT_BUCKET=$(terraform output -raw deployment_bucket_name)
 WEBSITE_ENDPOINT=$(terraform output -raw deployment_website_endpoint)
 
-echo -e "Source bucket: ${GREEN}$SOURCE_BUCKET${NC}"
-echo -e "Pipeline: ${GREEN}$PIPELINE_NAME${NC}"
+echo -e "Deployment bucket: ${GREEN}$DEPLOYMENT_BUCKET${NC}"
 echo -e "Website endpoint: ${GREEN}$WEBSITE_ENDPOINT${NC}"
 echo ""
 
-# Step 6: Upload source code to S3
-echo -e "${YELLOW}[6/7] Uploading source code to S3...${NC}"
-awslocal s3 cp "$PROJECT_ROOT/nextjs-app.zip" "s3://$SOURCE_BUCKET/nextjs-app.zip"
-echo -e "${GREEN}Source code uploaded${NC}"
-echo ""
+# Step 4: Build Next.js application
+echo -e "${YELLOW}[4/5] Building Next.js application...${NC}"
+cd "$NEXTJS_DIR"
 
-# Step 7: Trigger pipeline execution
-echo -e "${YELLOW}[7/7] Triggering CodePipeline execution...${NC}"
-EXECUTION_ID=$(awslocal codepipeline start-pipeline-execution \
-    --name "$PIPELINE_NAME" \
-    --query 'pipelineExecutionId' \
-    --output text)
-echo -e "${GREEN}Pipeline execution started: $EXECUTION_ID${NC}"
-echo ""
-
-# Monitor pipeline status
-echo -e "${BLUE}Monitoring pipeline execution...${NC}"
-echo "Use './scripts/status.sh' to check pipeline status"
-echo ""
-
-# Wait a moment and show initial status
-sleep 5
-PIPELINE_STATE=$(awslocal codepipeline get-pipeline-state --name "$PIPELINE_NAME" 2>/dev/null || echo "")
-
-if [ -n "$PIPELINE_STATE" ]; then
-    echo -e "${BLUE}Current pipeline stages:${NC}"
-    echo "$PIPELINE_STATE" | grep -E "stageName|actionName|status" | head -20 || echo "Status not yet available"
+if [ ! -d "node_modules" ]; then
+    echo "Installing dependencies..."
+    npm ci
 fi
 
+echo "Building Next.js app..."
+npm run build
+
+echo -e "${GREEN}Next.js build complete${NC}"
 echo ""
+
+# Step 5: Deploy to S3
+echo -e "${YELLOW}[5/5] Deploying to S3...${NC}"
+cd "$NEXTJS_DIR/out"
+
+echo "Syncing files to S3 bucket..."
+awslocal s3 sync . "s3://$DEPLOYMENT_BUCKET/" --delete
+
+# Count deployed files
+FILE_COUNT=$(awslocal s3 ls "s3://$DEPLOYMENT_BUCKET/" --recursive | wc -l | tr -d ' ')
+echo -e "${GREEN}Deployed $FILE_COUNT files to S3${NC}"
+echo ""
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Deployment Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "Next steps:"
-echo -e "1. Check pipeline status: ${YELLOW}./scripts/status.sh${NC}"
+echo -e "1. Check deployment status: ${YELLOW}./scripts/status.sh${NC}"
 echo -e "2. View website: ${YELLOW}$WEBSITE_ENDPOINT${NC}"
-echo -e "3. View logs: ${YELLOW}awslocal logs tail /aws/codebuild/$PIPELINE_NAME-build --follow${NC}"
+echo -e "3. List deployed files: ${YELLOW}awslocal s3 ls s3://$DEPLOYMENT_BUCKET --recursive${NC}"
+echo ""
+echo -e "Try it now:"
+echo -e "  ${CYAN}curl $WEBSITE_ENDPOINT${NC}"
 echo ""
