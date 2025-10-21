@@ -1,5 +1,7 @@
 # Practical 6: Infrastructure as Code with Terraform and LocalStack
 
+**YOU ARE TO CLONE PRACTICAL6-EXAMPLE REPOSITORY FROM GITHUB FOR THIS PRACTICAL.**
+
 **Learning Outcomes:**
 1. Use Terraform to define and provision infrastructure on LocalStack AWS
 2. Deploy a Next.js static website to AWS S3 using Infrastructure as Code
@@ -250,10 +252,20 @@ Follow this approach to understand each step:
 ```bash
 # 1. Start LocalStack
 ./scripts/setup.sh
+OR
+localstack start
 
 # 2. Install Next.js dependencies
 cd nextjs-app
 npm ci
+cd ..
+
+OR
+
+# 2a. Setup Next.js app yourself with 
+npx create-next-app nextjs-app
+cd nextjs-app
+npm install
 cd ..
 
 # 3. Initialize Terraform
