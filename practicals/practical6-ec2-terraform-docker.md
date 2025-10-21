@@ -815,6 +815,7 @@ Capture screenshots showing:
 - [ ] URL bar must be visible showing the access method (e.g., `localhost:8080`)
 - [ ] Application must be functional (not just showing an error page)
 
+
 #### 2. Documentation (Required)
 
 Create a document (PDF or Markdown) containing:
