@@ -96,6 +96,9 @@ You should see output similar to:
 k6 v0.48.0 (2024-01-22T10:42:09+0000/v0.48.0-0-gbc6654b9, go1.21.5, darwin/arm64)
 ```
 
+### K6 Desktop App
+
+Download Link: https://grafana.com/docs/k6/latest/k6-studio/
 ---
 
 ## Understanding k6 Basics
@@ -1449,27 +1452,6 @@ practical7_[StudentID]/
         ├── page-load-test.png
         └── concurrent-test.png
 ```
-
----
-
-### Grading Criteria
-
-**Implementation (40%)**
-- ✅ Application runs correctly
-- ✅ All API endpoints work
-- ✅ UI is functional and responsive
-- ✅ Code quality and organization
-
-**Test Scripts (20%)**
-- ✅ All four k6 tests execute
-- ✅ Tests have appropriate thresholds
-- ✅ Custom/modified test demonstrates understanding
-
-**Test Report (40%)**
-- ✅ Complete screenshots (10%)
-- ✅ Thorough analysis (10%)
-- ✅ Clear bottleneck identification (10%)
-- ✅ Actionable recommendations (10%)
 
 ---
 
