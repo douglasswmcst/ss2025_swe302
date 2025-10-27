@@ -1,6 +1,7 @@
 # Practical 7: Performance Testing with k6
 
 ## Table of Contents
+
 - [Introduction](#introduction)
 - [Prerequisites](#prerequisites)
 - [Installing k6](#installing-k6)
@@ -22,6 +23,7 @@
 ### What is Performance Testing?
 
 Performance testing is the practice of evaluating how a system performs under various conditions. It helps you understand:
+
 - **Response times**: How fast does your application respond?
 - **Throughput**: How many requests can it handle?
 - **Stability**: Does it remain stable under load?
@@ -30,6 +32,7 @@ Performance testing is the practice of evaluating how a system performs under va
 ### Why k6?
 
 k6 is a modern, open-source load testing tool designed for developers. Key benefits:
+
 - **Developer-friendly**: Tests written in JavaScript
 - **CLI-first**: Easy to integrate into development workflow
 - **Accurate metrics**: Provides detailed performance insights
@@ -38,6 +41,7 @@ k6 is a modern, open-source load testing tool designed for developers. Key benef
 ### Learning Objectives
 
 By the end of this practical, you will be able to:
+
 1. Install and configure k6 for performance testing
 2. Write k6 test scripts for different scenarios
 3. Run various types of performance tests (smoke, load, spike)
@@ -49,6 +53,7 @@ By the end of this practical, you will be able to:
 ## Prerequisites
 
 Before starting, ensure you have:
+
 - **Node.js and pnpm** installed on your system
 - **Next.js application** running (completed Dog CEO API integration)
 - **Familiarity** with Next.js, TypeScript, and basic JavaScript
@@ -66,16 +71,19 @@ Follow the official k6 installation guide for your platform:
 ### Platform-Specific Instructions
 
 #### macOS (using Homebrew)
+
 ```bash
 brew install k6
 ```
 
 #### Windows (using Chocolatey)
+
 ```bash
 choco install k6
 ```
 
 #### Linux (Debian/Ubuntu)
+
 ```bash
 sudo gpg -k
 sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
@@ -87,11 +95,13 @@ sudo apt-get install k6
 ### Verification
 
 After installation, verify k6 is installed correctly:
+
 ```bash
 k6 version
 ```
 
 You should see output similar to:
+
 ```
 k6 v0.48.0 (2024-01-22T10:42:09+0000/v0.48.0-0-gbc6654b9, go1.21.5, darwin/arm64)
 ```
@@ -99,7 +109,8 @@ k6 v0.48.0 (2024-01-22T10:42:09+0000/v0.48.0-0-gbc6654b9, go1.21.5, darwin/arm64
 ### K6 Desktop App
 
 Download Link: https://grafana.com/docs/k6/latest/k6-studio/
----
+
+## \*Note: Next.js has an issue with K6 Studio now. I will fix this. Use the CLI only for now
 
 ## Understanding k6 Basics
 
@@ -109,13 +120,13 @@ A typical k6 test script consists of four main parts:
 
 ```javascript
 // 1. Imports - Load k6 modules
-import http from 'k6/http';
-import { check, sleep } from 'k6';
+import http from "k6/http";
+import { check, sleep } from "k6";
 
 // 2. Options - Configure test execution
 export const options = {
-  vus: 10,          // Virtual Users
-  duration: '30s',  // Test duration
+  vus: 10, // Virtual Users
+  duration: "30s", // Test duration
 };
 
 // 3. Setup (optional) - Runs once before the test
@@ -126,7 +137,7 @@ export function setup() {
 // 4. Default function - Main test logic (runs for each VU)
 export default function () {
   // Your test code here
-  http.get('https://test.k6.io');
+  http.get("https://test.k6.io");
   sleep(1);
 }
 
@@ -139,15 +150,17 @@ export function teardown(data) {
 ### Virtual Users (VUs)
 
 **Virtual Users** simulate real users interacting with your application. Each VU:
+
 - Executes the test script independently
 - Runs the default function repeatedly
 - Simulates concurrent traffic
 
 Example:
+
 ```javascript
 export const options = {
-  vus: 10,          // 10 concurrent users
-  duration: '1m',   // for 1 minute
+  vus: 10, // 10 concurrent users
+  duration: "1m", // for 1 minute
 };
 ```
 
@@ -158,9 +171,9 @@ export const options = {
 ```javascript
 export const options = {
   stages: [
-    { duration: '30s', target: 10 },  // Ramp up to 10 VUs over 30s
-    { duration: '1m', target: 10 },   // Stay at 10 VUs for 1 minute
-    { duration: '30s', target: 0 },   // Ramp down to 0 VUs
+    { duration: "30s", target: 10 }, // Ramp up to 10 VUs over 30s
+    { duration: "1m", target: 10 }, // Stay at 10 VUs for 1 minute
+    { duration: "30s", target: 0 }, // Ramp down to 0 VUs
   ],
 };
 ```
@@ -170,19 +183,21 @@ This creates a realistic traffic pattern rather than sudden spikes.
 ### Checks vs Thresholds
 
 **Checks** are like assertions - they verify responses but don't stop the test:
+
 ```javascript
 check(response, {
-  'status is 200': (r) => r.status === 200,
-  'response time < 500ms': (r) => r.timings.duration < 500,
+  "status is 200": (r) => r.status === 200,
+  "response time < 500ms": (r) => r.timings.duration < 500,
 });
 ```
 
 **Thresholds** define pass/fail criteria for the entire test:
+
 ```javascript
 export const options = {
   thresholds: {
-    http_req_duration: ['p(95)<500'],  // 95% of requests must be under 500ms
-    http_req_failed: ['rate<0.1'],      // Error rate must be below 10%
+    http_req_duration: ["p(95)<500"], // 95% of requests must be under 500ms
+    http_req_failed: ["rate<0.1"], // Error rate must be below 10%
   },
 };
 ```
@@ -191,17 +206,18 @@ export const options = {
 
 k6 tracks several important metrics:
 
-| Metric | Description |
-|--------|-------------|
+| Metric              | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
 | `http_req_duration` | Total time for HTTP request (includes DNS, connection, waiting, receiving) |
-| `http_req_waiting` | Time spent waiting for response from server |
-| `http_req_failed` | Rate of failed requests |
-| `http_reqs` | Total number of HTTP requests |
-| `vus` | Number of active virtual users |
-| `vus_max` | Maximum number of virtual users |
-| `iterations` | Number of times the VU executes the default function |
+| `http_req_waiting`  | Time spent waiting for response from server                                |
+| `http_req_failed`   | Rate of failed requests                                                    |
+| `http_reqs`         | Total number of HTTP requests                                              |
+| `vus`               | Number of active virtual users                                             |
+| `vus_max`           | Maximum number of virtual users                                            |
+| `iterations`        | Number of times the VU executes the default function                       |
 
 **Percentiles** (p90, p95, p99) show distribution:
+
 - **p(95)**: 95% of requests were faster than this value
 - **p(99)**: 99% of requests were faster than this value
 
@@ -212,6 +228,7 @@ k6 tracks several important metrics:
 ### What is a Smoke Test?
 
 A **smoke test** verifies basic functionality with minimal load (usually 1 VU). It answers:
+
 - Does the application respond?
 - Are all endpoints accessible?
 - Are there any obvious errors?
@@ -223,35 +240,37 @@ Think of it as a "sanity check" before running heavier tests.
 Let's look at `tests/k6/smoke-test.js`:
 
 ```javascript
-import http from 'k6/http';
-import { check } from 'k6';
+import http from "k6/http";
+import { check } from "k6";
 
 export const options = {
-  vus: 1,              // Single virtual user
-  duration: '30s',     // Run for 30 seconds
+  vus: 1, // Single virtual user
+  duration: "30s", // Run for 30 seconds
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 
 export default function () {
   // Quick checks that everything works
   const endpoints = [
-    { name: 'Homepage', url: BASE_URL },
-    { name: 'Random Dog API', url: `${BASE_URL}/api/dogs` },
-    { name: 'Breeds API', url: `${BASE_URL}/api/dogs/breeds` },
+    { name: "Homepage", url: BASE_URL },
+    { name: "Random Dog API", url: `${BASE_URL}/api/dogs` },
+    { name: "Breeds API", url: `${BASE_URL}/api/dogs/breeds` },
   ];
 
   endpoints.forEach((endpoint) => {
     const response = http.get(endpoint.url);
     check(response, {
       [`${endpoint.name} - status is 200`]: (r) => r.status === 200,
-      [`${endpoint.name} - response time < 1s`]: (r) => r.timings.duration < 1000,
+      [`${endpoint.name} - response time < 1s`]: (r) =>
+        r.timings.duration < 1000,
     });
   });
 }
 ```
 
 **Key Points:**
+
 - Uses only 1 VU for minimal load
 - Tests multiple endpoints in sequence
 - Checks both status codes and response times
@@ -260,6 +279,7 @@ export default function () {
 ### Running the Smoke Test
 
 1. **Start your Next.js application** (in a separate terminal):
+
    ```bash
    pnpm dev
    ```
@@ -302,22 +322,71 @@ You'll see output like:
 ### Understanding Success Criteria
 
 ✅ **Passing Smoke Test Indicators:**
+
 - All checks show 100%
 - `http_req_failed` is 0.00%
 - Response times are reasonable (<1s)
 
 ❌ **Failing Indicators:**
+
 - Some checks fail (<100%)
 - `http_req_failed` > 0%
 - Extremely slow response times
 
 ---
 
+## Running Your First Test (Smoke Test) On Grafana Cloud
+
+### What is Grafana Cloud?
+
+Grafana Cloud is a managed service that provides hosting for Grafana, Loki, and k6 Cloud. It allows you to run your k6 tests in the cloud, providing enhanced scalability, collaboration features, and detailed analytics.
+
+### Setting Up Grafana Cloud for k6
+
+1. **Create a Grafana Cloud Account**: Sign up at [Grafana Cloud](https://grafana.com/products/cloud/).
+2. **Create a k6 Cloud API Key**:
+   - Log in to your Grafana Cloud account and open a stack.
+   - On the main menu, click Testing & synthetics -> Performance -> Settings.
+   - Under Access, click Personal token. Here you can view, copy, and regenerate your personal API token.
+3. Authenticate k6 on the terminal
+
+```bash
+k6 cloud login --token $TOKEN
+```
+
+4. Update the package.json to include a script for running the smoke test on Grafana Cloud
+
+```json
+"test:k6:cloud:smoke": "k6 cloud run tests/k6/smoke-test.js",
+
+```
+
+5. You need to configure the BASE_URL environment variable to point to your deployed application. You can do this by setting the environment variable in your terminal before running the test:
+   We are doing this by port forwarding our local application to a public URL using ngrok. First, start your Next.js application locally:
+
+```bash
+pnpm dev
+```
+
+Then, in another terminal window, start ngrok to expose your local server:
+
+```bash
+ngrok http 3000
+```
+
+Retrieve the ngrok url and replace it in your test file.
+
+Finally run 
+```bash
+  npm run test:k6:cloud:smoke
+```
+
 ## API Endpoint Performance Testing
 
 ### Purpose
 
 API endpoint testing evaluates how your backend APIs perform under sustained load. This test:
+
 - Simulates realistic user traffic patterns
 - Measures API response times
 - Identifies performance bottlenecks
@@ -328,33 +397,33 @@ API endpoint testing evaluates how your backend APIs perform under sustained loa
 Let's look at `tests/k6/api-endpoint-test.js`:
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate } from 'k6/metrics';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Rate } from "k6/metrics";
 
 // Custom metric to track error rate
-const errorRate = new Rate('errors');
+const errorRate = new Rate("errors");
 
 export const options = {
   stages: [
-    { duration: '30s', target: 10 }, // Ramp up to 10 users
-    { duration: '1m', target: 10 },  // Stay at 10 users
-    { duration: '30s', target: 0 },  // Ramp down to 0 users
+    { duration: "30s", target: 10 }, // Ramp up to 10 users
+    { duration: "1m", target: 10 }, // Stay at 10 users
+    { duration: "30s", target: 0 }, // Ramp down to 0 users
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
-    errors: ['rate<0.1'],             // Error rate should be below 10%
+    http_req_duration: ["p(95)<500"], // 95% of requests should be below 500ms
+    errors: ["rate<0.1"], // Error rate should be below 10%
   },
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 
 export default function () {
   // Test 1: Get random dog image
   const randomDogResponse = http.get(`${BASE_URL}/api/dogs`);
   check(randomDogResponse, {
-    'random dog status is 200': (r) => r.status === 200,
-    'random dog has message': (r) => JSON.parse(r.body).message !== undefined,
+    "random dog status is 200": (r) => r.status === 200,
+    "random dog has message": (r) => JSON.parse(r.body).message !== undefined,
   }) || errorRate.add(1);
 
   sleep(1);
@@ -362,8 +431,9 @@ export default function () {
   // Test 2: Get breeds list
   const breedsResponse = http.get(`${BASE_URL}/api/dogs/breeds`);
   check(breedsResponse, {
-    'breeds status is 200': (r) => r.status === 200,
-    'breeds list is not empty': (r) => Object.keys(JSON.parse(r.body).message).length > 0,
+    "breeds status is 200": (r) => r.status === 200,
+    "breeds list is not empty": (r) =>
+      Object.keys(JSON.parse(r.body).message).length > 0,
   }) || errorRate.add(1);
 
   sleep(1);
@@ -371,8 +441,9 @@ export default function () {
   // Test 3: Get specific breed
   const breedResponse = http.get(`${BASE_URL}/api/dogs?breed=husky`);
   check(breedResponse, {
-    'specific breed status is 200': (r) => r.status === 200,
-    'specific breed has message': (r) => JSON.parse(r.body).message !== undefined,
+    "specific breed status is 200": (r) => r.status === 200,
+    "specific breed has message": (r) =>
+      JSON.parse(r.body).message !== undefined,
   }) || errorRate.add(1);
 
   sleep(1);
@@ -384,10 +455,12 @@ export default function () {
 The test uses three stages to simulate realistic traffic:
 
 1. **Ramp-up (30s)**: Gradually increases from 0 to 10 VUs
+
    - Prevents shocking the system
    - Mimics organic traffic growth
 
 2. **Sustained Load (1m)**: Maintains 10 VUs
+
    - Tests system stability under consistent load
    - Identifies memory leaks or degradation
 
@@ -400,10 +473,11 @@ The test uses three stages to simulate realistic traffic:
 The script creates a custom metric `errorRate`:
 
 ```javascript
-const errorRate = new Rate('errors');
+const errorRate = new Rate("errors");
 ```
 
 This tracks failed checks:
+
 ```javascript
 check(...) || errorRate.add(1);
 ```
@@ -421,6 +495,7 @@ pnpm test:k6:api
 Look for these key indicators:
 
 **Good Performance:**
+
 ```
 ✓ http_req_duration..............: p(95)=245.23ms  (threshold < 500ms)
 ✓ errors.........................: 0.00%           (threshold < 10%)
@@ -428,12 +503,14 @@ Look for these key indicators:
 ```
 
 **Performance Issues:**
+
 ```
 ✗ http_req_duration..............: p(95)=1245.23ms (threshold < 500ms)
 ✗ errors.........................: 15.23%          (threshold < 10%)
 ```
 
 **What to watch:**
+
 - **p(95) response time**: Should be under 500ms
 - **Error rate**: Should be under 10%
 - **Failed requests**: Should be 0%
@@ -445,6 +522,7 @@ Look for these key indicators:
 ### Purpose
 
 Page load testing measures how quickly users can access your web pages. This is crucial for:
+
 - User experience
 - SEO rankings
 - Conversion rates
@@ -454,30 +532,30 @@ Page load testing measures how quickly users can access your web pages. This is 
 `tests/k6/page-load-test.js`:
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep } from 'k6';
+import http from "k6/http";
+import { check, sleep } from "k6";
 
 export const options = {
   stages: [
-    { duration: '1m', target: 20 }, // Ramp up to 20 users
-    { duration: '2m', target: 20 }, // Stay at 20 users
-    { duration: '1m', target: 0 },  // Ramp down
+    { duration: "1m", target: 20 }, // Ramp up to 20 users
+    { duration: "2m", target: 20 }, // Stay at 20 users
+    { duration: "1m", target: 0 }, // Ramp down
   ],
   thresholds: {
-    http_req_duration: ['p(99)<2000'], // 99% of requests under 2s
+    http_req_duration: ["p(99)<2000"], // 99% of requests under 2s
   },
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 
 export default function () {
   // Load the main page
   const response = http.get(BASE_URL);
 
   check(response, {
-    'homepage status is 200': (r) => r.status === 200,
-    'homepage loads quickly': (r) => r.timings.duration < 2000,
-    'homepage contains title': (r) => r.body.includes('Dog Image Browser'),
+    "homepage status is 200": (r) => r.status === 200,
+    "homepage loads quickly": (r) => r.timings.duration < 2000,
+    "homepage contains title": (r) => r.body.includes("Dog Image Browser"),
   });
 
   sleep(2);
@@ -487,6 +565,7 @@ export default function () {
 ### Percentile Metrics (p99)
 
 The threshold uses `p(99)<2000`:
+
 - **p(99)**: 99% of page loads must be under 2 seconds
 - This allows for occasional slower loads
 - More lenient than p(95) due to page complexity
@@ -494,6 +573,7 @@ The threshold uses `p(99)<2000`:
 ### Why 2 seconds?
 
 Research shows:
+
 - **< 1 second**: Excellent, no noticeable delay
 - **1-2 seconds**: Good, minimal interruption
 - **2-3 seconds**: Average, users start to notice
@@ -515,6 +595,7 @@ pnpm test:k6:page
 ```
 
 **Indicators:**
+
 - p(99) well under 2000ms
 - All checks passing
 - Consistent average response time
@@ -526,6 +607,7 @@ pnpm test:k6:page
 ### Purpose
 
 Concurrent user simulation tests how your application handles:
+
 - **Multiple simultaneous users** (realistic traffic)
 - **Traffic spikes** (sudden increases in load)
 - **Different usage patterns** (varied user behavior)
@@ -535,33 +617,33 @@ Concurrent user simulation tests how your application handles:
 `tests/k6/concurrent-users-test.js`:
 
 ```javascript
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Counter } from 'k6/metrics';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Counter } from "k6/metrics";
 
-const totalRequests = new Counter('total_requests');
+const totalRequests = new Counter("total_requests");
 
 export const options = {
   scenarios: {
     light_load: {
-      executor: 'constant-vus',
+      executor: "constant-vus",
       vus: 10,
-      duration: '1m',
+      duration: "1m",
     },
     spike_test: {
-      executor: 'ramping-vus',
+      executor: "ramping-vus",
       startVUs: 0,
       stages: [
-        { duration: '10s', target: 50 },  // Spike to 50 users
-        { duration: '30s', target: 50 },  // Stay at 50
-        { duration: '10s', target: 0 },   // Drop back
+        { duration: "10s", target: 50 }, // Spike to 50 users
+        { duration: "30s", target: 50 }, // Stay at 50
+        { duration: "10s", target: 0 }, // Drop back
       ],
-      startTime: '1m',
+      startTime: "1m",
     },
   },
   thresholds: {
-    http_req_duration: ['p(90)<1000'], // 90% under 1s
-    http_req_failed: ['rate<0.05'],     // Less than 5% errors
+    http_req_duration: ["p(90)<1000"], // 90% under 1s
+    http_req_failed: ["rate<0.05"], // Less than 5% errors
   },
 };
 ```
@@ -569,12 +651,14 @@ export const options = {
 ### Scenarios Explained
 
 **Scenario 1: Light Load (0-1 minute)**
+
 - **Executor**: `constant-vus` (constant virtual users)
 - **VUs**: 10 users
 - **Duration**: 1 minute
 - **Purpose**: Baseline performance measurement
 
 **Scenario 2: Spike Test (1-2.8 minutes)**
+
 - **Executor**: `ramping-vus` (ramping virtual users)
 - **Peak**: 50 users
 - **Purpose**: Test system resilience during traffic spikes
@@ -589,33 +673,34 @@ The test simulates actual user flow:
 export default function () {
   // 1. Load homepage
   let response = http.get(BASE_URL);
-  check(response, { 'homepage loaded': (r) => r.status === 200 });
+  check(response, { "homepage loaded": (r) => r.status === 200 });
   totalRequests.add(1);
   sleep(2);
 
   // 2. Fetch breeds
   response = http.get(`${BASE_URL}/api/dogs/breeds`);
-  check(response, { 'breeds loaded': (r) => r.status === 200 });
+  check(response, { "breeds loaded": (r) => r.status === 200 });
   totalRequests.add(1);
   sleep(1);
 
   // 3. Get random dog (simulating button click)
   response = http.get(`${BASE_URL}/api/dogs`);
-  check(response, { 'random dog loaded': (r) => r.status === 200 });
+  check(response, { "random dog loaded": (r) => r.status === 200 });
   totalRequests.add(1);
   sleep(3);
 
   // 4. Get specific breed (simulating breed selection)
-  const breeds = ['husky', 'corgi', 'retriever', 'bulldog', 'poodle'];
+  const breeds = ["husky", "corgi", "retriever", "bulldog", "poodle"];
   const randomBreed = breeds[Math.floor(Math.random() * breeds.length)];
   response = http.get(`${BASE_URL}/api/dogs?breed=${randomBreed}`);
-  check(response, { 'specific breed loaded': (r) => r.status === 200 });
+  check(response, { "specific breed loaded": (r) => r.status === 200 });
   totalRequests.add(1);
   sleep(2);
 }
 ```
 
 **User Journey:**
+
 1. Visit homepage → wait 2s
 2. Load breeds list → wait 1s
 3. Click "Get Random Dog" → wait 3s (looking at image)
@@ -634,23 +719,27 @@ pnpm test:k6:concurrent
 Watch for:
 
 **During Light Load (10 VUs):**
+
 ```
 http_req_duration..............: avg=245ms  p(90)=456ms
 http_req_failed................: 0.00%
 ```
 
 **During Spike (50 VUs):**
+
 ```
 http_req_duration..............: avg=678ms  p(90)=985ms
 http_req_failed................: 1.2%
 ```
 
 **Good Performance:**
+
 - p(90) stays under 1000ms even during spike
 - Error rate remains under 5%
 - System recovers after spike
 
 **Performance Issues:**
+
 - p(90) exceeds 1000ms
 - Error rate > 5%
 - System doesn't recover
@@ -666,6 +755,7 @@ When k6 finishes a test, it displays comprehensive metrics. Let's understand eac
 #### Request Metrics
 
 **`http_req_duration`**
+
 - **What**: Total time from request start to response received
 - **Includes**: DNS lookup + connection + waiting + receiving data
 - **Good values**:
@@ -673,26 +763,31 @@ When k6 finishes a test, it displays comprehensive metrics. Let's understand eac
   - Page loads: < 2000ms
 
 **`http_req_waiting`**
+
 - **What**: Time spent waiting for server response (Time to First Byte)
 - **Indicates**: Server processing speed
 - **Good values**: < 200ms for APIs
 
 **`http_req_blocked`**
+
 - **What**: Time spent waiting for available TCP connection
 - **High values indicate**: Connection pool exhaustion
 
 **`http_req_connecting`**
+
 - **What**: Time spent establishing TCP connection
 - **High values indicate**: Network issues or server limits
 
 #### Success Metrics
 
 **`http_req_failed`**
+
 - **What**: Percentage of failed HTTP requests
 - **Target**: < 1% for production systems
 - **Causes**: Server errors, timeouts, network issues
 
 **`checks`**
+
 - **What**: Percentage of successful checks
 - **Target**: 100% for critical checks
 - **Example**: `✓ checks: 95.00% ✓ 95 ✗ 5`
@@ -700,14 +795,17 @@ When k6 finishes a test, it displays comprehensive metrics. Let's understand eac
 #### Load Metrics
 
 **`http_reqs`**
+
 - **What**: Total number of HTTP requests made
 - **Used for**: Understanding throughput
 
 **`iterations`**
+
 - **What**: Number of times VUs completed the default function
 - **Used for**: Measuring completed user journeys
 
 **`vus`**
+
 - **What**: Number of active virtual users
 - **Shows**: Current load level
 
@@ -715,22 +813,24 @@ When k6 finishes a test, it displays comprehensive metrics. Let's understand eac
 
 Understanding percentiles is crucial:
 
-| Percentile | Meaning | Use Case |
-|------------|---------|----------|
-| **avg** | Average response time | General performance indicator |
-| **min** | Fastest response | Best-case scenario |
-| **med** | Median (50th percentile) | Typical user experience |
-| **max** | Slowest response | Worst-case scenario |
-| **p(90)** | 90% of requests faster | Good performance benchmark |
-| **p(95)** | 95% of requests faster | Performance SLA target |
-| **p(99)** | 99% of requests faster | Outlier detection |
+| Percentile | Meaning                  | Use Case                      |
+| ---------- | ------------------------ | ----------------------------- |
+| **avg**    | Average response time    | General performance indicator |
+| **min**    | Fastest response         | Best-case scenario            |
+| **med**    | Median (50th percentile) | Typical user experience       |
+| **max**    | Slowest response         | Worst-case scenario           |
+| **p(90)**  | 90% of requests faster   | Good performance benchmark    |
+| **p(95)**  | 95% of requests faster   | Performance SLA target        |
+| **p(99)**  | 99% of requests faster   | Outlier detection             |
 
 **Example:**
+
 ```
 http_req_duration: avg=245ms min=120ms med=230ms max=1540ms p(90)=385ms p(95)=445ms p(99)=892ms
 ```
 
 **Interpretation:**
+
 - **Average user** experiences 245ms response
 - **90% of users** wait less than 385ms
 - **5% of users** experience 445-892ms
@@ -739,26 +839,31 @@ http_req_duration: avg=245ms min=120ms med=230ms max=1540ms p(90)=385ms p(95)=44
 ### Checks vs Thresholds
 
 **Checks** (non-blocking):
+
 ```javascript
 check(response, {
-  'status is 200': (r) => r.status === 200,
+  "status is 200": (r) => r.status === 200,
 });
 ```
+
 - Verify conditions during test
 - Don't stop test if they fail
 - Shown as percentages in results
 
 **Thresholds** (blocking):
+
 ```javascript
 thresholds: {
   http_req_duration: ['p(95)<500'],
 }
 ```
+
 - Define pass/fail criteria
 - Can abort test if breached
 - Determine overall test success
 
 **Result Display:**
+
 ```
 ✓ http_req_duration..............: p(95)=445ms   (threshold < 500ms) ← PASS
 ✗ http_req_failed................: 12.5%         (threshold < 10%)   ← FAIL
@@ -769,33 +874,41 @@ thresholds: {
 🚨 **Red Flags:**
 
 1. **High Error Rates**
+
    ```
    http_req_failed................: 15.23%
    ```
+
    - **Concern**: More than 1-2% failures
    - **Causes**: Server errors, timeouts, bugs
    - **Action**: Check server logs, investigate errors
 
 2. **Slow Response Times**
+
    ```
    http_req_duration..............: p(95)=3456ms
    ```
+
    - **Concern**: p(95) or p(99) exceed thresholds
    - **Causes**: Database queries, external APIs, inefficient code
    - **Action**: Profile application, optimize bottlenecks
 
 3. **Increasing Response Times**
+
    ```
    Start: avg=245ms → Middle: avg=567ms → End: avg=1234ms
    ```
+
    - **Concern**: Performance degrades over time
    - **Causes**: Memory leaks, resource exhaustion
    - **Action**: Monitor memory usage, check for leaks
 
 4. **Failed Checks**
+
    ```
    ✗ checks: 76.23% ✓ 76 ✗ 24
    ```
+
    - **Concern**: Less than 95% passing
    - **Causes**: Application logic errors, data issues
    - **Action**: Review failed check details
@@ -820,6 +933,7 @@ Complete these exercises to deepen your understanding of k6.
 **Goal**: Understand how load affects performance.
 
 **Steps:**
+
 1. Open `tests/k6/api-endpoint-test.js`
 2. Modify the stages to increase VUs:
    ```javascript
@@ -832,13 +946,15 @@ Complete these exercises to deepen your understanding of k6.
 3. Run the test: `pnpm test:k6:api`
 4. Compare results with original 10 VU test
 
-**Questions to Answer:**
+**Questions to Ask yourself:**
+
 - How did p(95) response time change?
 - Did any requests fail?
 - What was the maximum response time?
 - Did the system remain stable?
 
 **Expected Outcome:**
+
 - Higher VUs = Higher response times
 - Possible increase in error rates
 - System may approach limits
@@ -850,6 +966,7 @@ Complete these exercises to deepen your understanding of k6.
 **Goal**: Understand how thresholds work and how to set realistic targets.
 
 **Steps:**
+
 1. Open `tests/k6/page-load-test.js`
 2. Make the threshold very strict:
    ```javascript
@@ -861,16 +978,19 @@ Complete these exercises to deepen your understanding of k6.
 4. Observe the failure
 
 **Expected Output:**
+
 ```
 ✗ http_req_duration..............: p(99)=1245.23ms (threshold < 100ms) FAILED
 ```
 
-**Questions to Answer:**
+**Questions to ASK YOURSELF:**
+
 - Why did the threshold fail?
 - What is a realistic threshold for your application?
 - How would you improve performance to meet stricter thresholds?
 
 **Next Steps:**
+
 - Gradually adjust threshold until test passes
 - Document your application's realistic performance limits
 
@@ -881,26 +1001,29 @@ Complete these exercises to deepen your understanding of k6.
 **Goal**: Extend test coverage to new endpoints.
 
 **Steps:**
+
 1. Open `tests/k6/smoke-test.js`
 2. Add a new endpoint for a specific breed:
    ```javascript
    const endpoints = [
-     { name: 'Homepage', url: BASE_URL },
-     { name: 'Random Dog API', url: `${BASE_URL}/api/dogs` },
-     { name: 'Breeds API', url: `${BASE_URL}/api/dogs/breeds` },
+     { name: "Homepage", url: BASE_URL },
+     { name: "Random Dog API", url: `${BASE_URL}/api/dogs` },
+     { name: "Breeds API", url: `${BASE_URL}/api/dogs/breeds` },
      // Add this:
-     { name: 'Husky API', url: `${BASE_URL}/api/dogs?breed=husky` },
+     { name: "Husky API", url: `${BASE_URL}/api/dogs?breed=husky` },
    ];
    ```
 3. Run the test: `pnpm test:k6:smoke`
 
 **Expected Outcome:**
+
 - Test now validates 4 endpoints instead of 3
 - All checks should pass
 - More comprehensive coverage
 
 **Challenge:**
 Add checks to verify:
+
 - Response body contains "husky" in the URL
 - Response has correct data structure
 
@@ -911,24 +1034,26 @@ Add checks to verify:
 **Goal**: Track application-specific metrics.
 
 **Steps:**
+
 1. Create a new file `tests/k6/custom-metrics-test.js`
 2. Implement custom metrics:
+
    ```javascript
-   import http from 'k6/http';
-   import { check } from 'k6';
-   import { Trend, Counter } from 'k6/metrics';
+   import http from "k6/http";
+   import { check } from "k6";
+   import { Trend, Counter } from "k6/metrics";
 
    // Custom metrics
-   const dogFetchTime = new Trend('dog_fetch_duration');
-   const breedsFetchTime = new Trend('breeds_fetch_duration');
-   const totalDogsFetched = new Counter('total_dogs_fetched');
+   const dogFetchTime = new Trend("dog_fetch_duration");
+   const breedsFetchTime = new Trend("breeds_fetch_duration");
+   const totalDogsFetched = new Counter("total_dogs_fetched");
 
    export const options = {
      vus: 5,
-     duration: '30s',
+     duration: "30s",
    };
 
-   const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+   const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 
    export default function () {
      // Fetch and measure breeds endpoint
@@ -948,16 +1073,19 @@ Add checks to verify:
      }
    }
    ```
+
 3. Run: `k6 run tests/k6/custom-metrics-test.js`
 
 **Expected Output:**
+
 ```
 dog_fetch_duration.............: avg=234.56ms min=123ms max=456ms
 breeds_fetch_duration..........: avg=156.78ms min=98ms max=287ms
 total_dogs_fetched.............: 150
 ```
 
-**Questions to Answer:**
+**Questions to ASK YOURSELF:**
+
 - Which endpoint is faster on average?
 - How many total dogs were successfully fetched?
 - What other metrics would be useful to track?
@@ -971,6 +1099,7 @@ Follow these best practices for effective performance testing:
 ### 1. Start with Smoke Tests
 
 Always begin with smoke tests before load testing:
+
 ```bash
 # First: Verify basic functionality
 pnpm test:k6:smoke
@@ -980,6 +1109,7 @@ pnpm test:k6:api
 ```
 
 **Why?**
+
 - Catches configuration errors early
 - Verifies endpoints are accessible
 - Prevents wasting time on broken tests
@@ -991,6 +1121,7 @@ pnpm test:k6:api
 Don't jump straight to high VU counts. Ramp up progressively:
 
 **Good Approach:**
+
 ```javascript
 stages: [
   { duration: '1m', target: 10 },   // Test with 10 VUs first
@@ -1000,6 +1131,7 @@ stages: [
 ```
 
 Then increase:
+
 ```javascript
 stages: [
   { duration: '1m', target: 20 },   // Then try 20 VUs
@@ -1009,6 +1141,7 @@ stages: [
 ```
 
 **Why?**
+
 - Identifies breaking points
 - Prevents overwhelming systems
 - Provides incremental data points
@@ -1020,6 +1153,7 @@ stages: [
 Model actual user behavior:
 
 **Bad:**
+
 ```javascript
 export default function () {
   http.get(`${BASE_URL}/api/dogs`);
@@ -1028,14 +1162,16 @@ export default function () {
 ```
 
 **Good:**
+
 ```javascript
 export default function () {
   http.get(`${BASE_URL}/api/dogs`);
-  sleep(3);  // User views image for 3 seconds
+  sleep(3); // User views image for 3 seconds
 }
 ```
 
 **Why?**
+
 - Simulates real user think time
 - Prevents artificial traffic patterns
 - Provides accurate performance data
@@ -1054,6 +1190,7 @@ thresholds: {
 ```
 
 **Why?**
+
 - Fast but failing responses are useless
 - A slow but stable system may be acceptable
 - Both metrics together show true health
@@ -1065,24 +1202,28 @@ thresholds: {
 Balance realism with test efficiency:
 
 **Page Navigation:**
+
 ```javascript
 http.get(BASE_URL);
-sleep(2);  // User reads page
+sleep(2); // User reads page
 ```
 
 **API Calls:**
+
 ```javascript
 http.get(`${BASE_URL}/api/dogs`);
-sleep(1);  // Brief pause between actions
+sleep(1); // Brief pause between actions
 ```
 
 **Image Viewing:**
+
 ```javascript
 http.get(`${BASE_URL}/api/dogs`);
-sleep(5);  // User enjoys the dog photo
+sleep(5); // User enjoys the dog photo
 ```
 
 **Why?**
+
 - Too short: Unrealistic hammering
 - Too long: Test takes forever
 - Just right: Balanced simulation
@@ -1095,17 +1236,20 @@ Record initial performance metrics:
 
 ```markdown
 ## Baseline Performance (No Load)
+
 - Homepage: p(95) = 245ms
 - API /dogs: p(95) = 156ms
 - API /breeds: p(95) = 134ms
 
 ## Performance at 10 VUs
+
 - Homepage: p(95) = 456ms
 - API /dogs: p(95) = 298ms
 - API /breeds: p(95) = 267ms
 ```
 
 **Why?**
+
 - Tracks performance over time
 - Identifies regressions
 - Sets realistic thresholds
@@ -1119,6 +1263,7 @@ Record initial performance metrics:
 #### Issue 1: "k6: command not found"
 
 **Symptom:**
+
 ```bash
 pnpm test:k6:smoke
 > k6 run tests/k6/smoke-test.js
@@ -1126,6 +1271,7 @@ sh: k6: command not found
 ```
 
 **Solution:**
+
 1. Verify k6 installation:
    ```bash
    k6 version
@@ -1138,6 +1284,7 @@ sh: k6: command not found
 #### Issue 2: App Must Be Running Before Tests
 
 **Symptom:**
+
 ```
 ✗ Homepage - status is 200
 ✗ Random Dog API - status is 200
@@ -1145,6 +1292,7 @@ http_req_failed................: 100.00%
 ```
 
 **Solution:**
+
 1. Start your Next.js dev server in a separate terminal:
    ```bash
    pnpm dev
@@ -1159,6 +1307,7 @@ http_req_failed................: 100.00%
 #### Issue 3: Port Conflicts
 
 **Symptom:**
+
 ```
 Error: listen EADDRINUSE: address already in use :::3000
 ```
@@ -1166,6 +1315,7 @@ Error: listen EADDRINUSE: address already in use :::3000
 **Solution:**
 
 **Option 1:** Kill the process using port 3000:
+
 ```bash
 # macOS/Linux
 lsof -ti:3000 | xargs kill -9
@@ -1176,11 +1326,13 @@ taskkill /PID <PID> /F
 ```
 
 **Option 2:** Use a different port:
+
 ```bash
 PORT=3001 pnpm dev
 ```
 
 Then update k6 tests:
+
 ```bash
 BASE_URL=http://localhost:3001 k6 run tests/k6/smoke-test.js
 ```
@@ -1190,12 +1342,14 @@ BASE_URL=http://localhost:3001 k6 run tests/k6/smoke-test.js
 #### Issue 4: Timeout Issues
 
 **Symptom:**
+
 ```
 http_req_duration..............: avg=30.12s
 http_req_failed................: 45.23%
 ```
 
 **Possible Causes:**
+
 1. **External API slow**: Dog CEO API may be experiencing issues
 2. **Network problems**: Internet connection unstable
 3. **Server overload**: Too many VUs for local machine
@@ -1203,6 +1357,7 @@ http_req_failed................: 45.23%
 **Solutions:**
 
 **1. Reduce VU count:**
+
 ```javascript
 stages: [
   { duration: '30s', target: 5 },  // Reduced from 10
@@ -1210,15 +1365,17 @@ stages: [
 ```
 
 **2. Increase timeout (if needed):**
+
 ```javascript
 export const options = {
   thresholds: {
-    http_req_duration: ['p(95)<5000'],  // Increased from 500ms
+    http_req_duration: ["p(95)<5000"], // Increased from 500ms
   },
 };
 ```
 
 **3. Check external API status:**
+
 - Visit https://dog.ceo/ in browser
 - Verify API responds
 
@@ -1227,6 +1384,7 @@ export const options = {
 #### Issue 5: TypeError: Cannot read property 'message'
 
 **Symptom:**
+
 ```
 TypeError: Cannot read property 'message' of undefined
 ```
@@ -1234,15 +1392,16 @@ TypeError: Cannot read property 'message' of undefined
 **Solution:**
 
 Add error handling to checks:
+
 ```javascript
 check(response, {
-  'status is 200': (r) => r.status === 200,
-  'has message': (r) => {
+  "status is 200": (r) => r.status === 200,
+  "has message": (r) => {
     try {
       const data = JSON.parse(r.body);
       return data.message !== undefined;
     } catch (e) {
-      console.error('JSON parse error:', e);
+      console.error("JSON parse error:", e);
       return false;
     }
   },
@@ -1255,17 +1414,29 @@ check(response, {
 
 ### Part 1: Implementation
 
+Navigate to this link: https://grafana.com/load-testing/types-of-load-testing/
+
+Smoke Test was already done and demo-ed in class.
+
+Complete the following test scenarios for the sample dog api app. 
+1. Average-load
+2. Spike-load
+3. Stress
+4. Soak
+
+**You are to clearly define your test criterias in the options.**
+
+You are complete these 4 scenarios using k6 locally and k6 cloud.
+Ensure to submit screenshot of terminal for local; and screenshot of grafana UI for cloud-based.
+
 Submit your complete Next.js application with Dog CEO API integration.
 
 **Required Files:**
-- `src/app/page.tsx` - Main page component
-- `src/app/api/dogs/route.ts` - Random dog API endpoint
-- `src/app/api/dogs/breeds/route.ts` - Breeds list endpoint
-- `src/app/layout.tsx` - Updated layout with metadata
-- `next.config.ts` - Image configuration
+- The sample app provided
 - `tests/k6/*.js` - All k6 test scripts
 
 **Verification:**
+
 - Application runs: `pnpm dev`
 - Application builds: `pnpm build`
 - Linting passes: `pnpm lint`
@@ -1280,177 +1451,47 @@ Submit a comprehensive performance testing report.
 **Required Sections:**
 
 #### 1. Test Results Screenshots
+1. Average-load (any duration)
+2. Spike-load (1min) **ensure extremly high VUs** However high your laptop can support.
+3. Stress (5mins)
+4. Soak (30mins)
 
-Include screenshots for ALL four test types:
-
-**Smoke Test:**
-```bash
-pnpm test:k6:smoke
-```
-- Screenshot of terminal output
-- Highlight check percentages
-
-**API Endpoint Test:**
-```bash
-pnpm test:k6:api
-```
-- Screenshot showing metrics
-- Highlight p(95) and error rate
-
-**Page Load Test:**
-```bash
-pnpm test:k6:page
-```
-- Screenshot of results
-- Highlight p(99) metric
-
-**Concurrent Users Test:**
-```bash
-pnpm test:k6:concurrent
-```
-- Screenshot during spike
-- Show both scenarios
+You are complete these 4 scenarios using k6 locally and k6 cloud.
+Ensure to submit screenshot of terminal for local; and screenshot of grafana UI for cloud-based.
 
 ---
 
-#### 2. Modified or Custom Test Script
+#### 2. Test Criterias
 
-Demonstrate understanding by creating ONE of:
+Propose test criterias in the README.md:
 
-**Option A: Modified Existing Test**
-- Take an existing test script
-- Modify VU counts, stages, or thresholds
-- Add new checks or endpoints
-- Explain your modifications
+**Example Metrics:**
 
-**Option B: New Custom Test**
-- Create a new test from scratch
-- Test a specific scenario
-- Use custom metrics
-- Document your approach
-
-**Include:**
-- Full test script code
-- Explanation of what it tests
-- Results from running the test
-
----
-
-#### 3. Written Analysis of Performance Findings
-
-Analyze your test results (500-750 words):
-
-**Structure:**
-
-**a) Summary**
-- Overall application performance
-- Which tests passed/failed
-- Key observations
-
-**b) Detailed Findings**
-
-For each test type, document:
-- Response time metrics (avg, p(95), p(99))
-- Error rates
-- Pass/fail status
-- Notable patterns
-
-**Example:**
-```
-Smoke Test:
-- All endpoints responded successfully
-- Average response time: 234ms
-- Breeds API fastest at 134ms
-- Homepage slowest at 345ms due to page size
-```
-
-**c) Comparison Across Tests**
-- How did performance change with increased load?
-- Did any endpoints degrade more than others?
-- Were there any surprises?
-
----
-
-#### 4. Identification of Bottlenecks or Issues
-
-Identify specific performance problems:
-
-**Document:**
-- Slow endpoints (> 500ms)
-- Failed requests (if any)
-- Degradation patterns (performance worsening over time)
-- Resource constraints (if observable)
-
-**Example:**
-```
-Bottleneck: API /dogs endpoint
-- Under light load (10 VUs): p(95) = 245ms
-- Under spike load (50 VUs): p(95) = 1234ms
-- Analysis: External Dog CEO API call is a bottleneck
-- Evidence: Response time increased 5x with 5x load
-```
-
----
-
-#### 5. Recommendations for Improvements
-
-Propose actionable improvements:
-
-**Categories:**
-
-**Performance Optimizations:**
-- Caching strategies
-- API response optimization
-- Code improvements
-
-**Infrastructure:**
-- Scaling approaches
-- Load balancing
-- CDN usage
-
-**Testing Improvements:**
-- Additional test scenarios
-- Better monitoring
-- Automated testing
-
-**Example:**
-```
-Recommendation 1: Implement API Response Caching
-
-Problem: /api/dogs/breeds endpoint fetches same data repeatedly
-Solution: Cache breed list for 1 hour using Next.js cache
-Expected Impact: Reduce breed endpoint response time by 80%
-Implementation:
-```javascript
-export async function GET() {
-  const response = await fetch('https://dog.ceo/api/breeds/list/all', {
-    next: { revalidate: 3600 } // Cache for 1 hour
-  });
-  return NextResponse.json(await response.json());
-}
-```
-```
+- Duration
+- Expected Response Times
+- Throughput
+- Error Rates
 
 ---
 
 ### Submission Format
 
-Submit as a ZIP file named: `practical7_[StudentID].zip`
-
 **Structure:**
 ```
-practical7_[StudentID]/
-├── performance-testing/          # Full Next.js app
-│   ├── src/
-│   ├── tests/
-│   ├── package.json
-│   └── ...
-└── REPORT.md                      # Performance test report
-    └── screenshots/
-        ├── smoke-test.png
-        ├── api-test.png
-        ├── page-load-test.png
-        └── concurrent-test.png
+
+practical7\_[StudentID]/
+├── performance-testing/ # Full Next.js app
+│ ├── src/
+│ ├── tests/
+│ ├── package.json
+│ └── ...
+└── REPORT.md # Performance test report
+└── screenshots/
+├── spike-test.png
+├── stress-test.png
+├── soak-test.png
+└── <others>.png
+
 ```
 
 ---
@@ -1483,3 +1524,4 @@ To further your performance testing knowledge:
 - **Performance Testing Guide**: https://k6.io/docs/testing-guides/
 
 Happy testing! 🚀
+```
