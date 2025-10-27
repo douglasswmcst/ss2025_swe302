@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:k6:smoke": "k6 run tests/k6/smoke-test.js",
+    "test:k6:cloud:smoke": "k6 cloud run tests/k6/smoke-test.js",
     "test:k6:api": "k6 run tests/k6/api-endpoint-test.js",
     "test:k6:page": "k6 run tests/k6/page-load-test.js",
     "test:k6:concurrent": "k6 run tests/k6/concurrent-users-test.js",
