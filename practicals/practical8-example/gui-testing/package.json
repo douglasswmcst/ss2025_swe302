@@ -1,0 +1,32 @@
+{
+  "name": "performance-testing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:k6:smoke": "k6 run tests/k6/smoke-test.js",
+    "test:k6:cloud:smoke": "k6 cloud run tests/k6/smoke-test.js",
+    "test:k6:api": "k6 run tests/k6/api-endpoint-test.js",
+    "test:k6:page": "k6 run tests/k6/page-load-test.js",
+    "test:k6:concurrent": "k6 run tests/k6/concurrent-users-test.js",
+    "test:k6:all": "k6 run tests/k6/smoke-test.js && k6 run tests/k6/api-endpoint-test.js && k6 run tests/k6/page-load-test.js"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "next": "16.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.0"
+  }
+}
